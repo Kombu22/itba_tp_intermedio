@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:12.7-alpine
+    container_name: itba-postgres-12
+    restart: unless-stopped
+
+    # lee variables desde docker/.env
+    env_file:
+      - .env
+
+    # publica el puerto al host (usa PG_PORT si existe, sino 5432)
+    ports:
+      - "${PG_PORT:-5432}:5432"
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    # opcional pero útil
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
