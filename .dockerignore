@@ -1,0 +1,9 @@
+# No enviar CSVs al build
+data/
+
+# Otras exclusiones
+.git
+**/__pycache__/
+**/*.pyc
+node_modules
+docker/pgdata
