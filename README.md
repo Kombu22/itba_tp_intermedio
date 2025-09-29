@@ -125,3 +125,55 @@ docker exec -it itba-postgres-12 psql -U itba -d real_estate \
 ### Prueba de consigna (la imagen no lleva datos)
 
 docker run --rm itba-etl ls -l /data  # -> No such file or directory
+
+## Ej5 — Consultas / Reportes (Docker)
+El script de reporting (reports/report.py) corre en la imagen itba-report y se conecta a Postgres usando las variables de docker/.env (paso PGHOST por parámetro). Genera 5 reportes útiles:
+
+1) Tendencia anual: ventas por año + precio promedio, mediana y p90.
+
+2) Top municipios por precio promedio (umbral ≥ 100 ventas).
+
+3) Años con mayor actividad (top 5 por cantidad de ventas).
+
+4) Mediana de (precio/valuación) por municipio (umbral ≥ 50 registros).
+
+5) Outliers: ventas ≥ P99 del precio (top 20, con fecha/dirección).
+
+### Build & Run
+
+# construir la imagen del reporte (una sola vez)
+docker build -t itba-report -f reports/Dockerfile .
+
+# ejecutar el reporte (usa docker/.env y PGHOST)
+docker run --rm --env-file docker/.env \
+  -e PGHOST=host.docker.internal \
+  itba-report
+
+# Ej6 — Documentación y ejecución end-to-end
+
+Cómo se resolvió
+
+Ej1: elección del dataset y preguntas → ver docs/dataset.md
+
+
+Ej2: DB PostgreSQL 12.7 con Docker Compose (docker/docker-compose.yml, variables en docker/.env).
+
+Ej3: DDL en sql/01_schema.sql, ejecutado con scripts/run_ddl.sh.
+
+Ej4: ETL en contenedor (itba-etl) que carga 100k filas; la imagen no incluye datos crudos (se usa volumen o DATA_URL).
+
+Ej5: reportes en contenedor (itba-report) con 5 consultas SQL.
+
+## Ejecución end-to-end (un comando)
+El script scripts/run_all.sh realiza: Compose → DDL → ETL (por URL) → Reportes.
+
+chmod +x scripts/run_all.sh
+./scripts/run_all.sh
+
+
+## Requisitos previos (una sola vez)
+
+docker build -t itba-etl    -f etl/Dockerfile .
+docker build -t itba-report -f reports/Dockerfile .
+
+El ETL usa DATA_URL para descargar el CSV en runtime; así la imagen no “hornea” datos crudos.
